@@ -193,34 +193,40 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 {
 	int paddedArraySize = 1;
 	int i = 0;
+	int j = 0;
 	
 	// For FFT, need array size of a power of 2
+	// Change 5: Strength reduction
 	while (paddedArraySize < P) {
-		paddedArraySize *= 2;
+		paddedArraySize += paddedArraySize;
 	}
 	
 	// enlarging x, h, and Y and padding with zeros (imaginary)
+	// Second change: Minimizing work inside loops
+	// Third change: Use the proper data type for constants
 	float *paddedInput = new float[2 * paddedArraySize];
-	for (i = 0; i < (N * 2); i+=2) {
-		paddedInput[i] = x[i/2];
-		paddedInput[i+1] = 0;
+	for (i = 0, j = 0; i < N; i++, j+=2) {
+		paddedInput[j] = x[i];
+		paddedInput[j+1] = 0.0;
 	}
-	for (; i < paddedArraySize; i++) {
-		paddedInput[i] = 0;
+	for (; j < paddedArraySize; j++) {
+		paddedInput[j] = 0.0;
 	}
 	
 	float *paddedIR = new float[2 * paddedArraySize];
-	for (i = 0; i < (M * 2); i+=2) {
-		paddedIR[i] = h[i/2];
-		paddedIR[i+1] = 0;
+	for (i = 0, j = 0; i < M; i++, j+=2) {
+		paddedIR[j] = h[i];
+		paddedIR[j+1] = 0.0;
 	}
-	for (; i < paddedArraySize; i++) {
-		paddedIR[i] = 0;
+	for (; j < paddedArraySize; j++) {
+		paddedIR[j] = 0.0;
 	}
 	
+	// Fourth change: Partial loop unrolling
 	float *paddedOutput = new float[2 * paddedArraySize];
-	for (i = 0; i < paddedArraySize; i++) {
-		paddedOutput[i] = 0;
+	for (i = 0; i < paddedArraySize; i+=2) {
+		paddedOutput[i] = 0.0;
+		paddedOutput[i+1] = 0.0;
 	}
 		
 	// Convert x and h and X and H
@@ -228,7 +234,7 @@ void convolve(float x[], int N, float h[], int M, float y[], int P)
 	fft((paddedIR - 1), paddedArraySize, 1);
 
 	// Complex multiplication to get Y values
-	for (i = 0; i < (paddedArraySize * 2); i+=2) {
+	for (i = 0; i < (paddedArraySize * 2); i++) {
 		paddedOutput[i] = (paddedInput[i] * paddedIR[i]) - (paddedInput[i+1] * paddedIR[i+1]);
 		paddedOutput[i+1] = (paddedInput[i+1] * paddedIR[i]) + (paddedInput[i] * paddedIR[i+1]);
 	}
