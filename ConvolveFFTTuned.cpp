@@ -117,7 +117,7 @@ float *readWAV (char *filename, float *signal)
 	printf("Size: %d\n", size);
 	for (int i = 0; i < size; i++) {
 		sample = data[i];
-		signal[i] = (sample * 1.0) / (pow(2.0, 15.0) - 1);
+		signal[i] = (sample * 1.0) / (32768.0 - 1);		// First change
 		if (signal[i] < -1.0)
 			signal[i] = -1.0;
 	}
@@ -279,7 +279,7 @@ void writeWAV(char *filename, float *signal, int signalSize)
 	// converting float to int between -2^15 to 2^15 - 1
 	for(int i = 0; i < signalSize; i++)
 	{
-		sample = (int16_t)(signal[i] * (pow(2.0, 15.0) - 1));
+		sample = (int16_t)(signal[i] * (32768.0 - 1));		// first change
 		outputfile.write((char*)&sample, 2);
 	}
 	outputfile.close();
